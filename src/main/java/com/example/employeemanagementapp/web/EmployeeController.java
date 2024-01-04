@@ -5,6 +5,7 @@ import com.example.employeemanagementapp.entities.Employee;
 import com.example.employeemanagementapp.repository.EmployeeRepository;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -19,12 +20,12 @@ import java.util.List;
 public class EmployeeController {
     private EmployeeRepository employeeRepository;
 
-    @GetMapping("/")
+    @GetMapping("/user")
     public String home(){
-        return "redirect:/index";
+        return "redirect:/user/index";
     }
 
-    @GetMapping("/index")
+    @GetMapping("/user/index")
     public String index(Model model,@RequestParam(name="keyword",defaultValue = "") String kw){
         List<Employee> employeeList = employeeRepository.findByNameContains(kw);
         model.addAttribute("employeeList",employeeList);
@@ -32,31 +33,35 @@ public class EmployeeController {
         return "employees";
     }
 
-    @GetMapping("/formEmployee")
+    @GetMapping("/admin/formEmployee")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public String formEmployee(Model model){
         model.addAttribute("employee",new Employee());
         return "formEmployee";
     }
 
-    @GetMapping("/delete")
+    @GetMapping("/admin/delete")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public String delete(Long id){
         employeeRepository.deleteById(id);
-        return "redirect:/index";
+        return "redirect:/user/index";
     }
 
-    @GetMapping("/editEmployee")
+    @GetMapping("/admin/editEmployee")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public String editEmployee(@RequestParam(name = "id")Long id,Model model){
        Employee employee = employeeRepository.findById(id).get();
        model.addAttribute("employee",employee);
        return "editEmployee" ;
     }
 
-    @PostMapping("/saveEmployee")
+    @PostMapping("/admin/saveEmployee")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public String saveEmployee(@Valid Employee employee, BindingResult bindingResult){
         if(bindingResult.hasErrors()){
             return "editEmployee";
         }
         employeeRepository.save(employee);
-        return "redirect:/index?keyword="+employee.getName();
+        return "redirect:/user/index?keyword="+employee.getName();
     }
 }
